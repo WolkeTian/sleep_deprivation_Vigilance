@@ -3,12 +3,12 @@ function [Dist_max,Dist_min, Dist_h] = bootstrap_PT(label,insts,perm_times)
 % combines bootstrapping with permutation testing (Ng et al., 2014) for SVM weights 
 % For each permutation, we draw B bootstrap samples with replacement and apply SVM. B was set to 1000 to keep computational time practical. Denoting 
 % the classifier weights for each bootstrap sample b as Wb, we compute the normalized mean over bootstrap samples:
-% W_mean = 1/B * ¦²b(Wbpq/std(Wb).
-% Ïàµ±ÓÚÃ¿´ÎbootstrapºóËã³öÀ´µÄw£¬³ıÒÔ±ê×¼²î½øĞĞ±ê×¼»¯£¬È»ºóËãÆ½¾ùµÄw. È»ºó±£Áô¾ùÖµwÖĞ×î´óµÄÄÇÒ»¸ö
+% W_mean = 1/B * Î£b(Wbpq/std(Wb).
+% ç›¸å½“äºæ¯æ¬¡bootstrapåç®—å‡ºæ¥çš„wï¼Œé™¤ä»¥æ ‡å‡†å·®è¿›è¡Œæ ‡å‡†åŒ–ï¼Œç„¶åç®—å¹³å‡çš„w. ç„¶åä¿ç•™å‡å€¼wä¸­æœ€å¤§çš„é‚£ä¸€ä¸ª
 % Milazzo, A.C., et al 2016.
 
 % if ~exist('perm_times','var') || isempty(perm_times)
-%     % perm_times ²ÎÊıÎª¿Õ£¬»òÕß²»ÒÔ±äÁ¿µÄĞÎÊ½´æÔÚ£»
+%     % perm_times å‚æ•°ä¸ºç©ºï¼Œæˆ–è€…ä¸ä»¥å˜é‡çš„å½¢å¼å­˜åœ¨ï¼›
 %     perm_times = 1e4;
 % end
 disp('-------------------Running bootstrapping with permutation testing-------------');
@@ -26,41 +26,40 @@ Dist_h = zeros(perm_times, 1);
 parfor i = 1:perm_times
     seed = randperm(sample_num);
     train_data = insts;
-    train_data(seed(1),:) = []; seed_data = seed(2:end); % È¥³ıÒ»¸öÑù±¾£¬±£³ÖºÍ½»²æÑéÖ¤Ò»ÖÂµÄÑù±¾Êı
-%     test_data = insts(seed(1),:);ÕâĞ©ÊÇ¿´ÖÃ»»ºóÑµÁ·³öµÄÄ£ĞÍµÄ±íÏÖ
+    train_data(seed(1),:) = []; seed_data = seed(2:end); % å»é™¤ä¸€ä¸ªæ ·æœ¬ï¼Œä¿æŒå’Œäº¤å‰éªŒè¯ä¸€è‡´çš„æ ·æœ¬æ•°
+%     test_data = insts(seed(1),:);è¿™äº›æ˜¯çœ‹ç½®æ¢åè®­ç»ƒå‡ºçš„æ¨¡å‹çš„è¡¨ç°
 %     test_label = label(seed(1));
     label_permed = label(seed_data);
     
     % bootstrap for 1e3 times
     B = 1e3;
-    weights_boot = zeros(size(insts,2), B); % features * B´óĞ¡µÄÈ¨ÖØ¾ØÕó
+    weights_boot = zeros(size(insts,2), B); % features * Bå¤§å°çš„æƒé‡çŸ©é˜µ
     for j = 1:B
         num_seed = numel(label) - 1;
         bootseed = randsample(num_seed,num_seed,true);
-        train_booted = train_data(bootseed,:);% ´Ó1-47ÖĞÈ¡47¸öÊı×Ö£¬ÓĞ·Å»ØÈ¥
-        label_pt_booted = label_permed(bootseed,1); % È¡¶ÔÓ¦µÄÖÃ»»ºóµÄlabel£¨²»ÄÜ²»¶ÔÓ¦£¬²»È»Í¬ÑùµÄÑù±¾¶ÔÓ¦²»Í¬µÄlable£©
+        train_booted = train_data(bootseed,:);% ä»1-47ä¸­å–47ä¸ªæ•°å­—ï¼Œæœ‰æ”¾å›å»
+        label_pt_booted = label_permed(bootseed,1); % å–å¯¹åº”çš„ç½®æ¢åçš„labelï¼ˆä¸èƒ½ä¸å¯¹åº”ï¼Œä¸ç„¶åŒæ ·çš„æ ·æœ¬å¯¹åº”ä¸åŒçš„lableï¼‰
         model = svmtrain(label_pt_booted,train_booted, '-s 3 -t 0 -q'); % -q,quiet
         weights = Cal_svm_paras(model);
         weights_boot(:,j) = weights;
     end
-    % W_mean = 1/B * ¦²b(Wbpq/std(Wb).
-    W_mean = mean(weights_boot./std(weights_boot),2); % »ñÈ¡B´ÎbootstrapºóµÄÆ½¾ùÖµ
+    % W_mean = 1/B * Î£b(Wbpq/std(Wb).
+    W_mean = mean(weights_boot./std(weights_boot),2); % è·å–Bæ¬¡bootstrapåçš„å¹³å‡å€¼
     % W_mean = (weights_boot * (1./std(weights_boot))')/1000;
-    % W¾ØÕó
-%     % store the correlation value to evaluate p value 
-%     Dist_h(i) = corr(label_permed, train_data * W_mean);
+    % WçŸ©é˜µ
+
     
     % store the maximum element of W_mean for each permutation.
-    W_max(i) = max(W_mean); % ´¢´æ×î´óµÄÄÇ¸öÈ¨ÖØ
-    W_min(i) = min(W_mean); % ´¢´æ×î´óµÄÄÇ¸öÈ¨ÖØ£¨¸ºµÄ£©% È¡¾ø¶ÔÖµºó²»ĞèÒª£¬Ö»±£ÁôÇ¿¶ÈĞÅÏ¢¡£
+    W_max(i) = max(W_mean); % å‚¨å­˜æœ€å¤§çš„é‚£ä¸ªæƒé‡
+    W_min(i) = min(W_mean); % å‚¨å­˜æœ€å¤§çš„é‚£ä¸ªæƒé‡ï¼ˆè´Ÿçš„ï¼‰% å–ç»å¯¹å€¼åä¸éœ€è¦ï¼Œåªä¿ç•™å¼ºåº¦ä¿¡æ¯ã€‚
     
 %     [~,~,dec_value] = svmpredict(label(seed(1)), insts(seed(1),:),model);
 %     real_data(i) = label(seed(1));
 %     predicted_data(i) = dec_value;
-%     »ñÈ¡features * 1µÄÈ¨ÖØÖµ 
+%     è·å–features * 1çš„æƒé‡å€¼ 
 end
 
-% h = corr(real_data',predicted_data'); % ¾­¹ıÒ»Íò´ÎÄ£Äâ£¬³öÀ´µÄrÖµ-0.19£¬r^2²»µ½0.04£¬ºÜµÍ¡£
+% h = corr(real_data',predicted_data'); % ç»è¿‡ä¸€ä¸‡æ¬¡æ¨¡æ‹Ÿï¼Œå‡ºæ¥çš„rå€¼-0.19ï¼Œr^2ä¸åˆ°0.04ï¼Œå¾ˆä½ã€‚
 Dist_max = W_max;
 Dist_min = W_min;
 toc;
