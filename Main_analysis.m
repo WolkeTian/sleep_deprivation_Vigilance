@@ -48,34 +48,33 @@ FC_diffs21(invalid_subs, :) = []; FC_diffs32(invalid_subs, :) = [];
 
 % extract behaviour differences of 23 subjects
 [RT_diffs21, RT_diffs32] = deal(PVT_RT(:, 7) - PVT_RT(:, 1), PVT_RT(:, 9) - PVT_RT(:, 7));
-[lapses_diffs21, lapses_diffs32] = deal(PVT_lapses(:, 7) - PVT_lapses(:, 1), ...
-    PVT_lapses(:, 9) - PVT_lapses(:, 7));
+
 [sleepiness_diffs21, sleepiness_diffs32] = deal(sleepiness(:, 2) - sleepiness(:, 1), ...
     sleepiness(:, 3) - sleepiness(:, 2)) ;
 
 % Pull these values into vectors
-[Features, depend_RT, depend_lapses, depend_sleepiness] = deal([FC_diffs21; FC_diffs32], ...
-    [RT_diffs21; RT_diffs32], [lapses_diffs21; lapses_diffs32], [sleepiness_diffs21; sleepiness_diffs32]);
+[Features, depend_RT, depend_sleepiness] = deal([FC_diffs21; FC_diffs32], ...
+    [RT_diffs21; RT_diffs32], [sleepiness_diffs21; sleepiness_diffs32]);
 
 %% memory release
-clear comfort FC_diffs21 FC_diffs32 FCvalues Ftest_file i invalid_subs lapses_diffs21...
-     lapses_diffs32 planning Pvalues PVT_lapses PVT_RT Q ROI ROI_FCmat ROI_Pmat...
+clear comfort FC_diffs21 FC_diffs32 FCvalues Ftest_file i invalid_subs ...
+     planning Pvalues PVT_RT Q ROI ROI_FCmat ROI_Pmat...
      RT_diffs21 RT_diffs32 Sig_links sleepiness sleepiness_diffs21 sleepiness_diffs32
 %% prediction with support vector machine (by linear kernel), leave-one-out cross validation
 model = svmtrain(depend_RT,Features, ['-s 3 -t 0 -q -v ', num2str(numel(depend_RT))]);
-model = svmtrain(depend_lapses,Features, ['-s 3 -t 0 -q -v ', num2str(numel(depend_RT))]);
+
 model = svmtrain(depend_sleepiness,Features, ['-s 3 -t 0 -q -v ', num2str(numel(depend_RT))]);
 
 %% Permutation & bootstrap to identify significant functional connectivities
-dependentNames = {'PVT_RT';'PVT_lapses';'ARSQ_sleepiness'};
-dependentVars = {depend_RT; depend_lapses; depend_sleepiness};
+dependentNames = {'PVT_RT';'ARSQ_sleepiness'};
+dependentVars = {depend_RT; depend_sleepiness};
 VarsNum = numel(dependentVars);
 % initial a struct to store model stats detailed results
 Model_stats = repmat(struct('name', NaN, 'RawBeh', NaN, 'Dist_max', NaN, 'Dist_min',NaN, ...
     'weights', NaN,'decValue', NaN,'meanWeights', NaN,'Pos_links',NaN, 'Neg_links', NaN, ...
     'ROI1Network', NaN, 'ROI2Network', NaN, 'ROI1MNIspace', NaN, 'ROI2MNIspace', NaN), VarsNum, 1);
 tic;
-for n = 1:3 % loop for each dependentVars
+for n = 1:VarsNum % loop for each dependentVars
     Model_stats(n,1).name = dependentNames{n};
     Model_stats(n,1).RawBeh = dependentVars{n};
     [Model_stats(n,1).Dist_max,Model_stats(n,1).Dist_min, Dist_h] = bootstrap_PT(Model_stats(n,1).RawBeh,Features, 1e2);
