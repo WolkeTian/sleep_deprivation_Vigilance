@@ -96,3 +96,12 @@ for n = 1:VarsNum % loop for each dependentVars
 end
 toc;
 %% done
+
+%% get p value of prediction
+
+distc = Permtest(depend_RT, Features);
+pvalue(1) = sum(distc > Model_stats(1,1).Correlation)/1e4;
+
+distc = Permtest(depend_sleepiness, Features);
+pvalue(2) = sum(distc > Model_stats(3,1).Correlation)/1e4;
+
