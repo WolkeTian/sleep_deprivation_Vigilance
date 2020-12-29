@@ -103,5 +103,5 @@ distc = Permtest(depend_RT, Features);
 pvalue(1) = sum(distc > Model_stats(1,1).Correlation)/1e4;
 
 distc = Permtest(depend_sleepiness, Features);
-pvalue(2) = sum(distc > Model_stats(3,1).Correlation)/1e4;
+pvalue(2) = sum(distc > Model_stats(2,1).Correlation)/1e4;
 
